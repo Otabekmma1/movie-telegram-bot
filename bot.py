@@ -8,6 +8,7 @@ from aiogram import Bot, Dispatcher
 from aiogram.filters import CommandStart
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, Message, InlineKeyboardMarkup, InlineKeyboardButton, \
     CallbackQuery
+from db import conn, cursor
 
 # Configuration
 TOKEN = "7511166749:AAEXfRoxFc-LD2UYSb5HczJY8i-3oUCQVSY"  # Replace with your actual bot token
@@ -21,45 +22,7 @@ dp = Dispatcher()
 logging.basicConfig(level=logging.INFO, stream=sys.stdout)
 
 # SQLite connection
-conn = sqlite3.connect(DATABASE_PATH)
-cursor = conn.cursor()
 
-cursor.execute('''
-    CREATE TABLE IF NOT EXISTS admins (
-        id INTEGER PRIMARY KEY,
-        telegram_id TEXT UNIQUE
-    )
-''')
-
-cursor.execute('''
-        CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY,
-            telegram_id TEXT UNIQUE
-        )
-    ''')
-
-# Create necessary tables
-cursor.execute('''
-        CREATE TABLE IF NOT EXISTS channels (
-            id INTEGER PRIMARY KEY,
-            telegram_id TEXT UNIQUE
-        )
-    ''')
-
-cursor.execute('''
-     CREATE TABLE IF NOT EXISTS movies (
-    id INTEGER PRIMARY KEY,
-    code TEXT UNIQUE,
-    title TEXT,
-    year INTEGER,
-    genre TEXT,
-    language TEXT,
-    video TEXT  -- Storing the video file_id as TEXT
-);
-
-    ''')
-
-conn.commit()
 
 # User state management
 user_states = {}
@@ -246,7 +209,7 @@ async def search_movie_request(message: Message):
     user_states[user_id] = {'state': 'searching_movie'}
     await message.answer("<i>Kino kodini yuboring...</i>", reply_markup=only_back_keyboard(), parse_mode='html')
 @dp.message(lambda message: message.text == "🤖Telegram bot yasatish")
-async def search_movie_request(message: Message):
+async def telegram_service_request(message: Message):
     user_id = message.from_user.id
     t = ("<b>🤖Telegram bot yaratish xizmati🤖</b>\n\n"
          "Admin: @otabek_mma1\n\n"
