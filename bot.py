@@ -205,7 +205,7 @@ async def callback_handler(callback_query: CallbackQuery):
     if await check_subscription(user_id):
         await command_start_handler(callback_query.message)
     else:
-        await send_subscription_prompt(callback_query.message)
+        await send_subscription_promp(callback_query.message)
 
 async def command_start_handler(message: Message):
     user_id = message.from_user.id
