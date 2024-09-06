@@ -24,41 +24,36 @@ logging.basicConfig(level=logging.INFO, stream=sys.stdout)
 conn = sqlite3.connect(DATABASE_PATH)
 cursor = conn.cursor()
 
+# Create necessary tables
 cursor.execute('''
     CREATE TABLE IF NOT EXISTS admins (
         id INTEGER PRIMARY KEY,
         telegram_id TEXT UNIQUE
     )
 ''')
-
 cursor.execute('''
-        CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY,
-            telegram_id TEXT UNIQUE
-        )
-    ''')
-
-# Create necessary tables
+    CREATE TABLE IF NOT EXISTS users (
+        id INTEGER PRIMARY KEY,
+        telegram_id TEXT UNIQUE
+    )
+''')
 cursor.execute('''
-        CREATE TABLE IF NOT EXISTS channels (
-            id INTEGER PRIMARY KEY,
-            telegram_id TEXT UNIQUE
-        )
-    ''')
-
+    CREATE TABLE IF NOT EXISTS channels (
+        id INTEGER PRIMARY KEY,
+        telegram_id TEXT UNIQUE
+    )
+''')
 cursor.execute('''
-     CREATE TABLE IF NOT EXISTS movies (
-    id INTEGER PRIMARY KEY,
-    code TEXT UNIQUE,
-    title TEXT,
-    year INTEGER,
-    genre TEXT,
-    language TEXT,
-    video TEXT  -- Storing the video file_id as TEXT
-);
-
-    ''')
-
+    CREATE TABLE IF NOT EXISTS movies (
+        id INTEGER PRIMARY KEY,
+        code TEXT UNIQUE,
+        title TEXT,
+        year INTEGER,
+        genre TEXT,
+        language TEXT,
+        video TEXT
+    )
+''')
 conn.commit()
 
 # User state management
@@ -66,6 +61,7 @@ user_states = {}
 
 # Track previous states for back functionality
 previous_states = {}
+
 
 # Utility functions
 async def check_subscription(user_id):
@@ -96,18 +92,22 @@ def get_inline_keyboard_for_channels():
 
     return InlineKeyboardMarkup(inline_keyboard=inline_keyboard)
 
+
 def admin_keyboard():
     buttons = [
         [KeyboardButton(text="➕ Kino qo'shish"), KeyboardButton(text="❌ Kino o'chirish")],
         [KeyboardButton(text="➕ Kanal qo'shish"), KeyboardButton(text="❌ Kanal o'chirish")],
         [KeyboardButton(text="👥Foydalanuvchilarga xabar yuborish")],
         [KeyboardButton(text="➕ Admin qo'shish"), KeyboardButton(text="❌ Admin o'chirish")],
-        [KeyboardButton(text="🏠 Bosh menyu")]  # Bosh menyu button
+        [KeyboardButton(text="🏠 Bosh menyu")]
     ]
     return ReplyKeyboardMarkup(keyboard=buttons, resize_keyboard=True)
 
-
-
+def bosh_sahifa_keyboard():
+    buttons = [
+        [KeyboardButton(text="🏠 Bosh menyu")]
+    ]
+    return ReplyKeyboardMarkup(keyboard=buttons, resize_keyboard=True)
 
 @dp.message(lambda message: message.text == "🏠 Bosh menyu")
 async def handle_bosh_menyu(message: Message):
@@ -130,7 +130,6 @@ async def download_video(file_id):
             else:
                 logging.error(f"Failed to download video. HTTP Status: {resp.status}")
                 return None
-
 
 
 async def handle_video_upload(message):
@@ -168,6 +167,12 @@ async def save_movie_to_db(user_id):
         return False
 
 
+async def delete_previous_inline_message(chat_id, message_id):
+    try:
+        await bot.delete_message(chat_id, message_id)
+    except Exception as e:
+        logging.error(f"Failed to delete previous inline message: {e}")
+
 
 # Handlers
 @dp.message(CommandStart())
@@ -183,9 +188,34 @@ async def start(message: Message):
     else:
         await send_subscription_prompt(message)
 
+
 async def send_subscription_prompt(message: Message):
+    # Remove old inline keyboard if exists
+    if 'last_inline_message_id' in user_states.get(message.from_user.id, {}):
+        await delete_previous_inline_message(message.chat.id,
+                                             user_states[message.from_user.id]['last_inline_message_id'])
+
     inline_keyboard = get_inline_keyboard_for_channels()
-    await message.answer("Botdan foydalanish uchun quyidagi kanallarga obuna bo'ling:", reply_markup=inline_keyboard)
+    sent_message = await message.answer("Botdan foydalanish uchun quyidagi kanallarga obuna bo'ling:",
+                                        reply_markup=inline_keyboard)
+
+    # Store the message ID for future reference
+    user_states[message.from_user.id] = user_states.get(message.from_user.id, {})
+    user_states[message.from_user.id]['last_inline_message_id'] = sent_message.message_id
+
+
+async def send_subscription_promp(message: Message):
+    # Remove old inline keyboard if exists
+    if 'last_inline_message_id' in user_states.get(message.from_user.id, {}):
+        await delete_previous_inline_message(message.chat.id,
+                                             user_states[message.from_user.id]['last_inline_message_id'])
+
+    inline_keyboard = get_inline_keyboard_for_channels()
+    sent_message = await message.answer("A'zo bo'lmadingiz, kanallarga obuna bo'ling:", reply_markup=inline_keyboard)
+
+    # Store the message ID for future reference
+    user_states[message.from_user.id] = user_states.get(message.from_user.id, {})
+    user_states[message.from_user.id]['last_inline_message_id'] = sent_message.message_id
 
 
 @dp.callback_query(lambda c: c.data == 'azo')
@@ -194,7 +224,7 @@ async def callback_handler(callback_query: CallbackQuery):
     if await check_subscription(user_id):
         await command_start_handler(callback_query.message)
     else:
-        await send_subscription_prompt(callback_query.message)
+        await send_subscription_promp(callback_query.message)
 
 
 async def command_start_handler(message: Message):
@@ -237,11 +267,14 @@ async def admin_panel_handler(message: Message):
         # Deny access if the user is not an admin
         await message.answer("Siz admin emassiz. Bu bo'limga kira olmaysiz.")
 
+
 @dp.message(lambda message: message.text == "🔍 Kino qidirish")
 async def search_movie_request(message: Message):
     user_id = message.from_user.id
     user_states[user_id] = {'state': 'searching_movie'}
-    await message.answer("<i>Kino kodini yuboring...</i>", reply_markup=only_back_keyboard(), parse_mode='html')
+    await message.answer("<i>Kino kodini yuboring...</i>", reply_markup=bosh_sahifa_keyboard(), parse_mode='html')
+
+
 @dp.message(lambda message: message.text == "🤖Telegram bot yasatish")
 async def telegram_service_request(message: Message):
     user_id = message.from_user.id
@@ -252,7 +285,6 @@ async def telegram_service_request(message: Message):
          "toliq malumot yozib qo'ying</i>\n\n"
          "Shunga qarab narxi kelishiladi")
     await message.answer(text=t, parse_mode='html')
-
 
 
 @dp.message(lambda message: message.text == "➕ Kino qo'shish")
