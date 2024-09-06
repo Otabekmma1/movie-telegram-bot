@@ -10,7 +10,7 @@ from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, Message, InlineKe
     CallbackQuery
 
 # Configuration
-TOKEN = "7300663714:AAHPky3j3vvLSTGmbiKtzMvtbQ01Wx8i5q0"  # Replace with your actual bot token
+TOKEN = "7511166749:AAEXfRoxFc-LD2UYSb5HczJY8i-3oUCQVSY"  # Replace with your actual bot token
 DATABASE_PATH = 'movie_bot.db'
 
 # Initialize bot and dispatcher
