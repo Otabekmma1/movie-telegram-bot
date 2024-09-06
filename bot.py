@@ -254,7 +254,7 @@ async def telegram_service_request(message: Message):
          "bot qanday vazifalarni bajarish kerak\n"
          "toliq malumot yozib qo'ying</i>\n\n"
          "Shunga qarab narxi kelishiladi")
-    await message.answer(text=t, reply_markup=handle_bosh_menyu(), parse_mode='html')
+    await message.answer(text=t, parse_mode='html')
 
 
 
