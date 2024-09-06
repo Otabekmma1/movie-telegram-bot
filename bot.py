@@ -72,17 +72,21 @@ previous_states = {}
 async def check_subscription(user_id):
     cursor.execute("SELECT telegram_id FROM channels")
     channels = cursor.fetchall()
+    logging.info(f"Checking subscription for user_id={user_id} against channels={channels}")
 
     for channel in channels:
         try:
             chat_member = await bot.get_chat_member(chat_id=channel[0], user_id=user_id)
-            if chat_member.status == 'left':
+            logging.info(f"Channel: {channel[0]}, Status: {chat_member.status}")
+            if chat_member.status in ['left', 'kicked']:
                 return False
         except Exception as e:
-            logging.error(f"Error checking subscription: {e}")
+            logging.error(f"Error checking subscription for channel {channel[0]}: {e}")
             return False
 
     return True
+
+
 
 
 def get_inline_keyboard_for_channels():
@@ -96,6 +100,7 @@ def get_inline_keyboard_for_channels():
     inline_keyboard.append([InlineKeyboardButton(text="A'zo bo'ldim", callback_data='azo')])
 
     return InlineKeyboardMarkup(inline_keyboard=inline_keyboard)
+
 
 
 def admin_keyboard():
@@ -198,6 +203,7 @@ async def callback_handler(callback_query: CallbackQuery):
         await command_start_handler(callback_query.message)
     else:
         await send_subscription_prompt(callback_query.message)
+
 
 
 async def command_start_handler(message: Message):
