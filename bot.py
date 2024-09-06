@@ -212,6 +212,7 @@ async def command_start_handler(message: Message):
     keyboard = ReplyKeyboardMarkup(
         keyboard=[
             [KeyboardButton(text="🔍 Kino qidirish")],
+            [KeyboardButton(text="🤖Telegram bot yasatish")],
             admin_button
         ],
         resize_keyboard=True
@@ -244,6 +245,16 @@ async def search_movie_request(message: Message):
     user_id = message.from_user.id
     user_states[user_id] = {'state': 'searching_movie'}
     await message.answer("<i>Kino kodini yuboring...</i>", reply_markup=only_back_keyboard(), parse_mode='html')
+@dp.message(lambda message: message.text == "🤖Telegram bot yasatish")
+async def search_movie_request(message: Message):
+    user_id = message.from_user.id
+    t = ("<b>🤖Telegram bot yaratish xizmati🤖</b>\n\n"
+         "Admin: @otabek_mma1\n\n"
+         "<i>Adminga bot nima haqida\n"
+         "bot qanday vazifalarni bajarish kerak\n"
+         "toliq malumot yozib qo'ying</i>\n\n"
+         "Shunga qarab narxi kelishiladi")
+    await message.answer(text=t, reply_markup=handle_bosh_menyu(), parse_mode='html')
 
 
 
