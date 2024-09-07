@@ -5,6 +5,7 @@ import logging
 import aiosqlite
 import sys
 import re
+import os
 from aiogram import Bot, Dispatcher
 from aiogram.filters import CommandStart
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, Message, InlineKeyboardMarkup, InlineKeyboardButton, \
@@ -12,8 +13,8 @@ from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, Message, InlineKe
 
 # Configuration
 TOKEN = "7511166749:AAEXfRoxFc-LD2UYSb5HczJY8i-3oUCQVSY"  # Replace with your actual bot token
-DATABASE_PATH = 'movie_bot.db'
-
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DATABASE_PATH = os.path.join(BASE_DIR, 'moviebot', 'movie_bot.db')
 # Initialize bot and dispatcher
 bot = Bot(token=TOKEN)
 dp = Dispatcher()
