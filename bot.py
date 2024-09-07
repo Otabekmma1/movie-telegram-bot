@@ -173,7 +173,6 @@ async def save_movie_to_db(user_id):
                 user_states[user_id]['video_file_id']
             ))
             await conn.commit()
-        return True
     except Exception as e:
         logging.error(f"Error saving movie to database: {e}")
         return False
