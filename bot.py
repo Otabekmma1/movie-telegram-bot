@@ -71,6 +71,8 @@ user_states = {}
 previous_states = {}
 
 # Foydalanuvchilarning a'zolik arizalari
+async def get_db_connection():
+    return await aiosqlite.connect(DATABASE_PATH)
 
 
 # Utility functions
