@@ -76,11 +76,8 @@ previous_states = {}
 
 # Foydalanuvchilarning a'zolik arizalari
 async def get_db_connection():
-    try:
-        return await aiosqlite.connect(DATABASE_PATH)
-    except Exception as e:
-        logging.error(f"Database connection error: {e}")
-        return None
+    return await aiosqlite.connect(DATABASE_PATH)
+
 # Utility functions
 async def check_subscription(user_id):
     async with aiosqlite.connect(DATABASE_PATH) as conn:
