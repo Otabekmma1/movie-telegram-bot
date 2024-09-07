@@ -32,16 +32,23 @@ cursor.execute('''
         telegram_id TEXT UNIQUE
     )
 ''')
+# telegram_id = '5541564692'  # Qo'shmoqchi bo'lgan adminning Telegram ID sini kiriting
+# cursor.execute('''
+#     INSERT INTO admins (telegram_id) VALUES (?)
+# ''', (telegram_id,))
 cursor.execute('''
     CREATE TABLE IF NOT EXISTS users (
         id INTEGER PRIMARY KEY,
-        telegram_id TEXT UNIQUE
+        telegram_id TEXT UNIQUE,
+        username TEXT
     )
 ''')
 cursor.execute('''
     CREATE TABLE IF NOT EXISTS channels (
         id INTEGER PRIMARY KEY,
-        telegram_id TEXT UNIQUE
+        telegram_id TEXT UNIQUE,
+        channel_name TEXT,
+        channel_url TEXT
     )
 ''')
 cursor.execute('''
@@ -63,6 +70,8 @@ user_states = {}
 # Track previous states for back functionality
 previous_states = {}
 
+# Foydalanuvchilarning a'zolik arizalari
+
 
 # Utility functions
 async def check_subscription(user_id):
@@ -81,6 +90,7 @@ async def check_subscription(user_id):
         return True
 
 
+
 async def ensure_subscription(message: Message):
     user_id = message.from_user.id
 
@@ -92,17 +102,20 @@ async def ensure_subscription(message: Message):
 
 
 def get_inline_keyboard_for_channels():
-    cursor.execute("SELECT telegram_id FROM channels")
+    # Kanal nomi va channel_url'ni olish
+    cursor.execute("SELECT channel_name, channel_url FROM channels")
     channels = cursor.fetchall()
 
-    inline_keyboard = [
-        [InlineKeyboardButton(text=f"{channel[0]}", url=f'https://t.me/{channel[0].lstrip("@")}')]
-        for channel in channels
-    ]
+    inline_keyboard = []
+    for channel in channels:
+        channel_name, channel_url = channel
+        # Kanal URL'sini to'g'ridan-to'g'ri qo'llash
+        inline_keyboard.append([InlineKeyboardButton(text=f"{channel_name}", url=channel_url)])
+
+    # "A'zo bo'ldim" tugmasi
     inline_keyboard.append([InlineKeyboardButton(text="A'zo bo'ldim", callback_data='azo')])
 
     return InlineKeyboardMarkup(inline_keyboard=inline_keyboard)
-
 
 def bosh_sahifa_keyboard():
     buttons = [
@@ -120,6 +133,7 @@ def admin_keyboard():
         [KeyboardButton(text="👥Foydalanuvchilarga xabar yuborish")],
         [KeyboardButton(text="➕ Admin qo'shish"), KeyboardButton(text="❌ Admin o'chirish")],
         [KeyboardButton(text="🏠 Bosh menyu")]
+
     ]
     return ReplyKeyboardMarkup(keyboard=buttons, resize_keyboard=True)
 
@@ -170,14 +184,17 @@ async def delete_previous_inline_message(chat_id, message_id):
 @dp.message(CommandStart())
 async def start(message: Message):
     user_id = message.from_user.id
+    username = message.from_user.username  # Retrieve the username
+
     async with aiosqlite.connect(DATABASE_PATH) as conn:
-        await conn.execute("INSERT OR IGNORE INTO users (telegram_id) VALUES (?)", (user_id,))
+        await conn.execute("INSERT OR IGNORE INTO users (telegram_id, username) VALUES (?, ?)", (user_id, username))
         await conn.commit()
 
     if not await ensure_subscription(message):
         return  # Stop further execution if the user is not subscribed
 
-    await command_start_handler(message)
+    await command_start_handler(message, message.from_user.first_name)
+
 
 
 async def send_subscription_prompt(message: Message):
@@ -199,34 +216,38 @@ async def send_subscription_prompt(message: Message):
 async def callback_handler(callback_query: CallbackQuery):
     user_id = callback_query.from_user.id
     if await check_subscription(user_id):
-        await command_start_handler(callback_query.message)
+        await command_start_handler(callback_query.message, callback_query.from_user.first_name)
     else:
         await send_subscription_prompt(callback_query.message)
 
-
-async def command_start_handler(message: Message):
+async def command_start_handler(message: Message, first_name: str):
     user_id = message.from_user.id
 
     if await check_subscription(user_id):
         async with aiosqlite.connect(DATABASE_PATH) as conn:
-            cursor = await conn.execute("SELECT telegram_id FROM admins WHERE telegram_id = ?", (user_id,))
-            admin = await cursor.fetchone()
+            async with conn.execute("SELECT telegram_id FROM admins WHERE telegram_id = ?", (user_id,)) as cursor:
+                admin = await cursor.fetchone()
+
+            # Optionally, retrieve username for display
+            async with conn.execute("SELECT username FROM users WHERE telegram_id = ?", (user_id,)) as cursor:
+                user = await cursor.fetchone()
+                username = user[0] if user else 'Unknown'
 
         admin_button = [KeyboardButton(text="🛠 Admin panel")] if admin else []
 
         keyboard = ReplyKeyboardMarkup(
             keyboard=[
                 [KeyboardButton(text="🔍 Kino qidirish")],
-                [KeyboardButton(text="🤖Telegram bot yasatish")],
+                [KeyboardButton(text="🤖 Telegram bot yasatish")],
                 admin_button
             ],
             resize_keyboard=True
         )
 
-
-        await message.answer(f"<b>👋Salom  {message.from_user.first_name}</b>\n\n <i>Kod orqali kinoni topishingiz mumkin!</i>", reply_markup=keyboard, parse_mode='html')
+        await message.answer(f"<b>👋 Salom {first_name}</b>\n\n<i>Kod orqali kinoni topishingiz mumkin!</i>", reply_markup=keyboard, parse_mode='html')
     else:
         await send_subscription_prompt(message)
+
 
 
 @dp.message(lambda message: message.text == "🏠 Bosh menyu")
@@ -286,13 +307,12 @@ async def delete_movie_request(message: Message):
     await send_movie_list(message)
 
 
+
 @dp.message(lambda message: message.text == "➕ Kanal qo'shish")
 async def add_channel_request(message: Message):
     save_previous_state(message.from_user.id, 'admin_panel')
-    user_states[message.from_user.id] = 'add_channel'
-    await message.answer("Kanal username'ini yuboring (masalan: @example_channel).", reply_markup=only_back_keyboard())
-
-
+    user_states[message.from_user.id] = {'state': 'add_channel'}
+    await message.answer("Kanal ID'sini yuboring:", reply_markup=only_back_keyboard())
 @dp.message(lambda message: message.text == "❌ Kanal o'chirish")
 async def delete_channel_request(message: Message):
     save_previous_state(message.from_user.id, 'admin_panel')
@@ -344,14 +364,75 @@ async def delete_admin_start(message: Message):
         await message.answer("Siz admin emassiz, admin o'chirish imkoniyatingiz yo'q.")
 
 
+@dp.message(lambda message: isinstance(user_states.get(message.from_user.id), dict) and user_states[message.from_user.id].get('state') == 'add_channel')
+async def handle_channel_id(message: Message):
+    user_id = message.from_user.id
+    channel_id = message.text.strip()
+
+    if re.match(r'^-100\d+$', channel_id):
+        user_states[user_id] = {
+            'channel_id': channel_id,
+            'state': 'awaiting_channel_name'
+        }
+        await message.answer("Kanal nomini kiriting:", reply_markup=only_back_keyboard())
+    else:
+        await message.answer("Iltimos, to'g'ri formatda kanal ID'sini kiriting (masalan: -1001234567890).",
+                             reply_markup=only_back_keyboard())
+
+@dp.message(lambda message: isinstance(user_states.get(message.from_user.id), dict) and user_states[message.from_user.id].get('state') == 'awaiting_channel_name')
+async def handle_channel_name(message: Message):
+    user_id = message.from_user.id
+    channel_name = message.text.strip()
+
+    if isinstance(user_states.get(user_id), dict):
+        user_states[user_id]['channel_name'] = channel_name
+        user_states[user_id]['state'] = 'awaiting_channel_url'
+        await message.answer("Kanal URL'sini kiriting (masalan: https://t.me/+tWL4NhIUHFZiMjNi):", reply_markup=only_back_keyboard())
+    else:
+        await message.answer("Xatolik: foydalanuvchi holati topilmadi.", reply_markup=only_back_keyboard())
+
+@dp.message(lambda message: isinstance(user_states.get(message.from_user.id), dict) and user_states[message.from_user.id].get('state') == 'awaiting_channel_url')
+async def handle_channel_url(message: Message):
+    user_id = message.from_user.id
+    channel_url = message.text.strip()
+
+    # Validate the channel URL format
+    url_pattern = re.compile(r'^https://t.me/[\w+_-]+$')
+    if not url_pattern.match(channel_url):
+        await message.answer("Iltimos, to'g'ri formatdagi kanal URL'sini kiriting (masalan: https://t.me/+tWL4NhIUHFZiMjNi).",
+                             reply_markup=only_back_keyboard())
+        return
+
+    print(f"User States: {user_states}")
+    print(f"Channel ID: {user_states[user_id].get('channel_id')}")
+    print(f"Channel Name: {user_states[user_id].get('channel_name')}")
+    print(f"Channel URL: {channel_url}")
+
+    try:
+        channel_id = user_states[user_id].get('channel_id')
+        channel_name = user_states[user_id].get('channel_name')
+        if channel_id and channel_name and channel_url:
+            cursor.execute("INSERT INTO channels (channel_name, telegram_id, channel_url) VALUES (?, ?, ?)",
+                           (channel_name, channel_id, channel_url))
+            conn.commit()
+            await message.answer("Kanal muvaffaqiyatli qo'shildi!", reply_markup=admin_keyboard())
+            # Clear user state
+            user_states[user_id] = {'state': 'admin_panel'}
+        else:
+            await message.answer("Kanal ID, nom yoki URL topilmadi.", reply_markup=admin_keyboard())
+    except sqlite3.IntegrityError:
+        await message.answer("Bu kanal allaqachon mavjud!", reply_markup=admin_keyboard())
+    except Exception as e:
+        print(f"Exception details: {e}")
+        await message.answer(f"Xatolik yuz berdi: {e}", reply_markup=admin_keyboard())
 @dp.callback_query(lambda c: c.data and c.data.startswith("delete_"))
 async def handle_channel_deletion(callback_query: CallbackQuery):
     user_id = callback_query.from_user.id
-    channel_username = callback_query.data[len("delete_"):].strip()
+    channel_id = callback_query.data[len("delete_"):].strip()
 
     # Kanalni o'chirish
     try:
-        cursor.execute("DELETE FROM channels WHERE telegram_id = ?", (channel_username,))
+        cursor.execute("DELETE FROM channels WHERE telegram_id = ?", (channel_id,))
         conn.commit()
         await callback_query.message.answer("Kanal muvaffaqiyatli o'chirildi.", reply_markup=admin_keyboard())
     except Exception as e:
@@ -361,25 +442,6 @@ async def handle_channel_deletion(callback_query: CallbackQuery):
     await callback_query.message.delete()
 
 
-@dp.message(lambda message: user_states.get(message.from_user.id) == 'add_channel')
-async def handle_channel_username(message: Message):
-    user_id = message.from_user.id
-    username = message.text.strip()
-
-    # Username to'g'ri formatda ekanligini tekshirish
-    if re.match(r'^@\w+$', username):
-        # Kanalni ma'lumotlar bazasiga qo'shish
-        try:
-            cursor.execute("INSERT INTO channels (telegram_id) VALUES (?)", (username,))
-            conn.commit()
-            await message.answer("Kanal muvaffaqiyatli qo'shildi!", reply_markup=admin_keyboard())
-        except sqlite3.IntegrityError:
-            await message.answer("Bu kanal username allaqachon mavjud!", reply_markup=admin_keyboard())
-        except Exception as e:
-            await message.answer(f"Xatolik yuz berdi: {e}", reply_markup=admin_keyboard())
-    else:
-        await message.answer("Iltimos, to'g'ri formatda kanal username'ini kiriting (masalan: @example_channel).",
-                             reply_markup=only_back_keyboard())
 
 
 @dp.message(
@@ -551,17 +613,19 @@ def save_previous_state(user_id, current_state):
 
 
 async def send_channel_list(message: Message):
-    cursor.execute("SELECT telegram_id FROM channels")
+    cursor.execute("SELECT channel_name, telegram_id FROM channels")
     channels = cursor.fetchall()
 
     inline_keyboard = [
-        [InlineKeyboardButton(text=f"{channel[0]}", callback_data=f"delete_{channel[0]}")]
+        [InlineKeyboardButton(text=f"{channel[0]}", callback_data=f"delete_{channel[1]}")]
         for channel in channels
     ]
     inline_keyboard.append([InlineKeyboardButton(text="Orqaga", callback_data="back_to_admin_panel")])
     markup = InlineKeyboardMarkup(inline_keyboard=inline_keyboard)
 
     await message.answer("O'chirish uchun kanalni tanlang:", reply_markup=markup)
+
+
 async def send_movie_list(message: Message):
     cursor.execute("SELECT code, title FROM movies")
     movies = cursor.fetchall()
@@ -615,7 +679,7 @@ async def search_movie_by_code(message: Message):
     try:
         # Search for the movie in the database
         logging.info(f"Querying movie with code: {movie_code}")
-        cursor.execute("SELECT title, year, genre, language, video FROM movies WHERE code = ?", (movie_code,))
+        cursor.execute("SELECT title, year, genre, language, code, video FROM movies WHERE code = ?", (movie_code,))
         movie = cursor.fetchone()
     except Exception as e:
         logging.error(f"Database error: {e}")
