@@ -14,7 +14,9 @@ from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, Message, InlineKe
 # Configuration
 TOKEN = "7511166749:AAEXfRoxFc-LD2UYSb5HczJY8i-3oUCQVSY"  # Replace with your actual bot token
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DATABASE_PATH = os.path.join(BASE_DIR, 'moviebot', 'movie_bot.db')
+DATABASE_PATH = os.path.join(BASE_DIR, 'movie_bot.db')
+print(f"Database path: {os.path.abspath(DATABASE_PATH)}")
+
 # Initialize bot and dispatcher
 bot = Bot(token=TOKEN)
 dp = Dispatcher()
