@@ -19,7 +19,11 @@ bot = Bot(token=TOKEN)
 dp = Dispatcher()
 
 # Setup logging
-logging.basicConfig(level=logging.INFO, stream=sys.stdout)
+# Setup logging
+logging.basicConfig(level=logging.INFO, handlers=[
+    logging.StreamHandler(sys.stdout),
+    logging.FileHandler('bot.log')
+])
 
 # SQLite connection
 conn = sqlite3.connect(DATABASE_PATH)
@@ -72,9 +76,11 @@ previous_states = {}
 
 # Foydalanuvchilarning a'zolik arizalari
 async def get_db_connection():
-    return await aiosqlite.connect(DATABASE_PATH)
-
-
+    try:
+        return await aiosqlite.connect(DATABASE_PATH)
+    except Exception as e:
+        logging.error(f"Database connection error: {e}")
+        return None
 # Utility functions
 async def check_subscription(user_id):
     async with aiosqlite.connect(DATABASE_PATH) as conn:
