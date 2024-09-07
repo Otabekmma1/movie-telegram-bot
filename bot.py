@@ -233,13 +233,17 @@ async def command_start_handler(message: Message, first_name: str):
                 user = await cursor.fetchone()
                 username = user[0] if user else 'Unknown'
 
-        admin_button = [KeyboardButton(text="🛠 Admin panel")] if admin else []
-
+        admin_buttons = []
+        if admin:
+            admin_buttons = [
+                [KeyboardButton(text="🛠 Admin panel")],
+                [KeyboardButton(text="📊 Statistika")]
+            ]
         keyboard = ReplyKeyboardMarkup(
             keyboard=[
                 [KeyboardButton(text="🔍 Kino qidirish")],
                 [KeyboardButton(text="🤖 Telegram bot yasatish")],
-                admin_button
+                *admin_buttons
             ],
             resize_keyboard=True
         )
@@ -249,6 +253,26 @@ async def command_start_handler(message: Message, first_name: str):
         await send_subscription_prompt(message)
 
 
+@dp.message(lambda message: message.text == "📊 Statistika")
+async def show_statistics(message: Message):
+    user_id = message.from_user.id
+
+    # Check if user is an admin
+    async with aiosqlite.connect(DATABASE_PATH) as conn:
+        async with conn.execute("SELECT telegram_id FROM admins WHERE telegram_id = ?", (user_id,)) as cursor:
+            admin = await cursor.fetchone()
+
+    if not admin:
+        await message.answer("Siz admin emassiz!")
+        return
+
+    # Fetch user count
+    async with aiosqlite.connect(DATABASE_PATH) as conn:
+        async with conn.execute("SELECT COUNT(*) FROM users") as cursor:
+            count = await cursor.fetchone()
+
+    user_count = count[0] if count else 0
+    await message.answer(f"Bot foydalanuvchilari soni: {user_count}")
 
 @dp.message(lambda message: message.text == "🏠 Bosh menyu")
 async def bosh(message:Message):
