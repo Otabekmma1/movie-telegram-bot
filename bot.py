@@ -154,9 +154,10 @@ async def download_video(file_id):
                 return None
 
 
+
 async def save_movie_to_db(user_id):
     try:
-        async with aiosqlite.connect(DATABASE_PATH) as conn:
+        async with get_db_connection() as conn:
             await conn.execute('''
                 INSERT INTO movies (code, title, year, genre, language, video) 
                 VALUES (?, ?, ?, ?, ?, ?)
