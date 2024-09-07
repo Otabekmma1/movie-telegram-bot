@@ -281,7 +281,7 @@ async def search_movie_request(message: Message):
     user_states[user_id] = {'state': 'searching_movie'}
     await message.answer("<i>Kino kodini yuboring...</i>", reply_markup=bosh_sahifa_keyboard(), parse_mode='html')
 
-@dp.message(lambda message: message.text == "🤖Telegram bot yasatish")
+@dp.message(lambda message: message.text == "🤖 Telegram bot yasatish")
 async def telegram_service_request(message: Message):
     user_id = message.from_user.id
     t = ("<b>🤖Telegram bot yaratish xizmati🤖</b>\n\n"
