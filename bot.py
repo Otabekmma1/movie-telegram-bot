@@ -252,7 +252,7 @@ async def command_start_handler(message: Message, first_name: str):
 
 @dp.message(lambda message: message.text == "🏠 Bosh menyu")
 async def bosh(message:Message):
-    await command_start_handler(message)
+    await command_start_handler(message, message.from_user.first_name)
 
 @dp.message(lambda message: message.text == "🛠 Admin panel")
 async def admin_panel_handler(message: Message):
