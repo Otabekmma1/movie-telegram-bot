@@ -9,13 +9,16 @@ from aiogram.filters import CommandStart
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, Message, InlineKeyboardMarkup, InlineKeyboardButton, \
     CallbackQuery
 
+
+TOKEN = "7511166749:AAEXfRoxFc-LD2UYSb5HczJY8i-3oUCQVSY"
+
 # Configuration
-TOKEN = "7511166749:AAEXfRoxFc-LD2UYSb5HczJY8i-3oUCQVSY"  # Replace with your actual bot token
 DATABASE_PATH = 'movie_bot.db'
 
-# Initialize bot and dispatcher
+
 bot = Bot(token=TOKEN)
 dp = Dispatcher()
+
 
 # Setup logging
 # Setup logging
@@ -121,6 +124,8 @@ def bosh_sahifa_keyboard():
 def only_back_keyboard():
     return ReplyKeyboardMarkup(keyboard=[[KeyboardButton(text="🔙 Orqaga")]], resize_keyboard=True)
 
+
+
 def admin_keyboard():
     buttons = [
         [KeyboardButton(text="➕ Kino qo'shish"), KeyboardButton(text="❌ Kino o'chirish")],
@@ -224,6 +229,7 @@ async def command_start_handler(message: Message, first_name: str):
             async with conn.execute("SELECT telegram_id FROM admins WHERE telegram_id = ?", (user_id,)) as cursor:
                 admin = await cursor.fetchone()
 
+
             # Optionally, retrieve username for display
             async with conn.execute("SELECT username FROM users WHERE telegram_id = ?", (user_id,)) as cursor:
                 user = await cursor.fetchone()
@@ -319,6 +325,7 @@ async def add_movie_start(message: Message):
     await message.answer("Kino nomini yuboring.", reply_markup=only_back_keyboard())
 
 
+
 @dp.message(lambda message: message.text == "❌ Kino o'chirish")
 async def delete_movie_request(message: Message):
     save_previous_state(message.from_user.id, 'admin_panel')
@@ -401,6 +408,7 @@ async def handle_channel_name(message: Message):
     user_id = message.from_user.id
     channel_name = message.text.strip()
 
+
     if isinstance(user_states.get(user_id), dict):
         user_states[user_id]['channel_name'] = channel_name
         user_states[user_id]['state'] = 'awaiting_channel_url'
@@ -482,6 +490,7 @@ async def handle_delete_admin_callback(callback_query: CallbackQuery):
     await callback_query.message.delete()
     await admin_panel_handler(callback_query.message)
 
+
 @dp.message(
     lambda message: isinstance(user_states.get(message.from_user.id), dict) and user_states[message.from_user.id].get('state') == 'adding_admin'
 )
@@ -551,6 +560,7 @@ async def add_movie(message: Message):
     if message.text == "🔙 Orqaga":
         await admin_panel_handler(message)
         return
+
 
     if state == 'title':
         user_states[user_id]['title'] = message.text
@@ -637,6 +647,7 @@ async def send_channel_list(message: Message):
                 await cursor.execute("SELECT channel_name, channel_url FROM channels")
                 channels = await cursor.fetchall()
 
+
         inline_keyboard = [
             [InlineKeyboardButton(text=f"{channel[0]}", callback_data=f"delete_{channel[1]}")]
             for channel in channels
@@ -722,11 +733,12 @@ async def search_movie_by_code(message: Message):
     if movie:
         title, year, genre, language, code, video_file_id = movie
 
+
         # Prepare movie details for caption
         caption = (
             f"<b>🎬Nomi:</b> {title}\n\n"
             f"<b>📆Yili:</b> {year}\n"
-            f"<b>🎞️Janr:</b> {genre}\n"
+            f"<b>🎞Janr:</b> {genre}\n"
             f"<b>🌍Tili:</b> {language}\n"
             f"<b>🗂Yuklash:</b> {code}\n\n\n"
             f"<b>🤖Bot:</b> @codermoviebot"
@@ -754,6 +766,7 @@ async def search_movie_by_code(message: Message):
         logging.info(f"Clearing state for user: {user_id}")
         user_states.pop(user_id, None)
 async def main():
+    await create_tables()
     await dp.start_polling(bot)
 
 
