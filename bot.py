@@ -753,9 +753,9 @@ async def search_movie_by_code(message: Message):
         # Faqat muvaffaqiyatli bo'lsa holatni tozalaymiz
         logging.info(f"Clearing state for user: {user_id}")
         user_states.pop(user_id, None)
+async def main():
+    await dp.start_polling(bot)
 
 
 if __name__ == "__main__":
-    from aiogram import executor
-    executor.start_polling(dp, skip_updates=True)
-
+    asyncio.run(main())
