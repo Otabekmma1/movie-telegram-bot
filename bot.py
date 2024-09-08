@@ -13,7 +13,7 @@ from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, Message, InlineKe
 TOKEN = "7511166749:AAEXfRoxFc-LD2UYSb5HczJY8i-3oUCQVSY"
 
 # Configuration
-DATABASE_PATH = 'movie_bot.db'
+DATABASE_PATH = '/app/movie_bot.db'
 
 
 bot = Bot(token=TOKEN)
@@ -169,6 +169,7 @@ async def save_movie_to_db(user_id):
                     user_states[user_id]['video_file_id']  # Save the file_id, not the video data itself
                 ))
                 await db.commit()
+        logging.debug("Movie saved succesfully")
         return True
     except Exception as e:
         logging.error(f"Error saving movie to database: {e}")
@@ -765,8 +766,12 @@ async def search_movie_by_code(message: Message):
         # Faqat muvaffaqiyatli bo'lsa holatni tozalaymiz
         logging.info(f"Clearing state for user: {user_id}")
         user_states.pop(user_id, None)
+
+
+
 async def main():
     await create_tables()
+    logging.debug("Tables created successfully")
     await dp.start_polling(bot)
 
 
