@@ -1,4 +1,3 @@
-import sqlite3
 import asyncio
 import aiohttp
 import logging
@@ -29,47 +28,40 @@ logging.basicConfig(level=logging.INFO, handlers=[
 ])
 
 # SQLite connection
-conn = sqlite3.connect(DATABASE_PATH)
-cursor = conn.cursor()
-
-# Create necessary tables
-cursor.execute('''
-    CREATE TABLE IF NOT EXISTS admins (
-        id INTEGER PRIMARY KEY,
-        telegram_id TEXT UNIQUE
-    )
-''')
-# telegram_id = '5541564692'  # Qo'shmoqchi bo'lgan adminning Telegram ID sini kiriting
-# cursor.execute('''
-#     INSERT INTO admins (telegram_id) VALUES (?)
-# ''', (telegram_id,))
-cursor.execute('''
-    CREATE TABLE IF NOT EXISTS users (
-        id INTEGER PRIMARY KEY,
-        telegram_id TEXT UNIQUE,
-        username TEXT
-    )
-''')
-cursor.execute('''
-    CREATE TABLE IF NOT EXISTS channels (
-        id INTEGER PRIMARY KEY,
-        telegram_id TEXT UNIQUE,
-        channel_name TEXT,
-        channel_url TEXT
-    )
-''')
-cursor.execute('''
-    CREATE TABLE IF NOT EXISTS movies (
-        id INTEGER PRIMARY KEY,
-        code TEXT UNIQUE,
-        title TEXT,
-        year INTEGER,
-        genre TEXT,
-        language TEXT,
-        video TEXT
-    )
-''')
-conn.commit()
+async def create_tables():
+    async with aiosqlite.connect(DATABASE_PATH) as db:
+        await db.execute('''
+            CREATE TABLE IF NOT EXISTS admins (
+                id INTEGER PRIMARY KEY,
+                telegram_id TEXT UNIQUE
+            )
+        ''')
+        await db.execute('''
+            CREATE TABLE IF NOT EXISTS users (
+                id INTEGER PRIMARY KEY,
+                telegram_id TEXT UNIQUE,
+                username TEXT
+            )
+        ''')
+        await db.execute('''
+            CREATE TABLE IF NOT EXISTS channels (
+                id INTEGER PRIMARY KEY,
+                channel_name TEXT,
+                channel_url TEXT
+            )
+        ''')
+        await db.execute('''
+            CREATE TABLE IF NOT EXISTS movies (
+                id INTEGER PRIMARY KEY,
+                code TEXT UNIQUE,
+                title TEXT,
+                year INTEGER,
+                genre TEXT,
+                language TEXT,
+                video TEXT
+            )
+        ''')
+        await db.commit()
 
 # User state management
 user_states = {}
@@ -78,8 +70,7 @@ user_states = {}
 previous_states = {}
 
 # Foydalanuvchilarning a'zolik arizalari
-async def get_db_connection():
-    return await aiosqlite.connect(DATABASE_PATH)
+
 
 # Utility functions
 async def check_subscription(user_id):
@@ -108,19 +99,18 @@ async def ensure_subscription(message: Message):
         return False  # Indicate that the user is not subscribed
     return True  # User is subscribed
 
-
-def get_inline_keyboard_for_channels():
-    # Kanal nomi va channel_url'ni olish
-    cursor.execute("SELECT channel_name, channel_url FROM channels")
-    channels = cursor.fetchall()
+async def get_inline_keyboard_for_channels():
+    async with aiosqlite.connect(DATABASE_PATH) as db:
+        async with db.execute("SELECT channel_name, channel_url FROM channels") as cursor:
+            channels = await cursor.fetchall()
 
     inline_keyboard = []
     for channel in channels:
         channel_name, channel_url = channel
-        # Kanal URL'sini to'g'ridan-to'g'ri qo'llash
+        # Use channel_url directly
         inline_keyboard.append([InlineKeyboardButton(text=f"{channel_name}", url=channel_url)])
 
-    # "A'zo bo'ldim" tugmasi
+    # "A'zo bo'ldim" button
     inline_keyboard.append([InlineKeyboardButton(text="A'zo bo'ldim", callback_data='azo')])
 
     return InlineKeyboardMarkup(inline_keyboard=inline_keyboard)
@@ -163,23 +153,24 @@ async def download_video(file_id):
 
 async def save_movie_to_db(user_id):
     try:
-        async with get_db_connection() as conn:
-            await conn.execute('''
-                INSERT INTO movies (code, title, year, genre, language, video) 
-                VALUES (?, ?, ?, ?, ?, ?)
-            ''', (
-                user_states[user_id]['code'],
-                user_states[user_id]['title'],
-                user_states[user_id]['year'],
-                user_states[user_id]['genre'],
-                user_states[user_id]['language'],
-                user_states[user_id]['video_file_id']
-            ))
-            await conn.commit()
+        async with aiosqlite.connect(DATABASE_PATH) as db:
+            async with db.cursor() as cursor:
+                await cursor.execute('''
+                    INSERT INTO movies (code, title, year, genre, language, video) 
+                    VALUES (?, ?, ?, ?, ?, ?)
+                ''', (
+                    user_states[user_id]['code'],
+                    user_states[user_id]['title'],
+                    user_states[user_id]['year'],
+                    user_states[user_id]['genre'],
+                    user_states[user_id]['language'],
+                    user_states[user_id]['video_file_id']  # Save the file_id, not the video data itself
+                ))
+                await db.commit()
+        return True
     except Exception as e:
         logging.error(f"Error saving movie to database: {e}")
         return False
-
 
 async def delete_previous_inline_message(chat_id, message_id):
     try:
@@ -291,17 +282,16 @@ async def admin_panel_handler(message: Message):
     user_id = message.from_user.id
 
     # Check if the user is an admin in the database
-    cursor.execute("SELECT telegram_id FROM admins WHERE telegram_id = ?", (user_id,))
-    admin = cursor.fetchone()
-
+    async with aiosqlite.connect(DATABASE_PATH) as db:
+        async with db.execute("SELECT telegram_id FROM admins WHERE telegram_id = ?", (user_id,)) as cursor:
+            admin = await cursor.fetchone()
 
     if admin:
-        save_previous_state(user_id, 'start')
+        save_previous_state(user_id, 'start')  # Make sure this function is correctly defined
         await message.answer("Admin paneliga xush kelibsiz. Tanlang:", reply_markup=admin_keyboard())
     else:
         # Deny access if the user is not an admin
         await message.answer("Siz admin emassiz. Bu bo'limga kira olmaysiz.")
-
 
 @dp.message(lambda message: message.text == "🔍 Kino qidirish")
 async def search_movie_request(message: Message):
@@ -369,32 +359,30 @@ async def add_admin_start(message: Message):
     user_id = message.from_user.id
 
     # Check if the user is an admin
-    cursor.execute("SELECT telegram_id FROM admins WHERE telegram_id = ?", (user_id,))
-    admin = cursor.fetchone()
+    async with aiosqlite.connect(DATABASE_PATH) as db:
+        async with db.execute("SELECT telegram_id FROM admins WHERE telegram_id = ?", (user_id,)) as cursor:
+            admin = await cursor.fetchone()
 
     if admin:
         user_states[user_id] = {'state': 'adding_admin'}
-        await message.answer("Yangi admin telegram id sini yuboring (masalan: 123456789).",
+        await message.answer("Yangi admin telegram ID'sini yuboring (masalan: 123456789).",
                              reply_markup=only_back_keyboard())
     else:
         await message.answer("Siz admin emassiz, yangi admin qo'shish imkoniyatingiz yo'q.")
-
-
 @dp.message(lambda message: message.text == "❌ Admin o'chirish")
 async def delete_admin_start(message: Message):
     user_id = message.from_user.id
 
     # Check if the user is an admin
-    cursor.execute("SELECT telegram_id FROM admins WHERE telegram_id = ?", (user_id,))
-    admin = cursor.fetchone()
-
+    async with aiosqlite.connect(DATABASE_PATH) as db:
+        async with db.execute("SELECT telegram_id FROM admins WHERE telegram_id = ?", (user_id,)) as cursor:
+            admin = await cursor.fetchone()
 
     if admin:
         user_states[user_id] = {'state': 'deleting_admin'}
         await show_admin_list(message)
     else:
         await message.answer("Siz admin emassiz, admin o'chirish imkoniyatingiz yo'q.")
-
 
 @dp.message(lambda message: isinstance(user_states.get(message.from_user.id), dict) and user_states[message.from_user.id].get('state') == 'add_channel')
 async def handle_channel_id(message: Message):
@@ -435,28 +423,24 @@ async def handle_channel_url(message: Message):
                              reply_markup=only_back_keyboard())
         return
 
-    print(f"User States: {user_states}")
-    print(f"Channel ID: {user_states[user_id].get('channel_id')}")
-    print(f"Channel Name: {user_states[user_id].get('channel_name')}")
-    print(f"Channel URL: {channel_url}")
-
     try:
         channel_id = user_states[user_id].get('channel_id')
         channel_name = user_states[user_id].get('channel_name')
         if channel_id and channel_name and channel_url:
-            cursor.execute("INSERT INTO channels (channel_name, telegram_id, channel_url) VALUES (?, ?, ?)",
-                           (channel_name, channel_id, channel_url))
-            conn.commit()
+            async with aiosqlite.connect(DATABASE_PATH) as db:
+                await db.execute("INSERT INTO channels (channel_name, channel_url) VALUES (?, ?)",
+                                 (channel_name, channel_url))
+                await db.commit()
             await message.answer("Kanal muvaffaqiyatli qo'shildi!", reply_markup=admin_keyboard())
-            # Clear user state
             user_states[user_id] = {'state': 'admin_panel'}
         else:
             await message.answer("Kanal ID, nom yoki URL topilmadi.", reply_markup=admin_keyboard())
-    except sqlite3.IntegrityError:
+    except aiosqlite.IntegrityError:
         await message.answer("Bu kanal allaqachon mavjud!", reply_markup=admin_keyboard())
     except Exception as e:
-        print(f"Exception details: {e}")
         await message.answer(f"Xatolik yuz berdi: {e}", reply_markup=admin_keyboard())
+
+
 @dp.callback_query(lambda c: c.data and c.data.startswith("delete_"))
 async def handle_channel_deletion(callback_query: CallbackQuery):
     user_id = callback_query.from_user.id
@@ -464,8 +448,9 @@ async def handle_channel_deletion(callback_query: CallbackQuery):
 
     # Kanalni o'chirish
     try:
-        cursor.execute("DELETE FROM channels WHERE telegram_id = ?", (channel_id,))
-        conn.commit()
+        async with aiosqlite.connect(DATABASE_PATH) as db:
+            await db.execute("DELETE FROM channels WHERE channel_url = ?", (channel_id,))
+            await db.commit()
         await callback_query.message.answer("Kanal muvaffaqiyatli o'chirildi.", reply_markup=admin_keyboard())
     except Exception as e:
         await callback_query.message.answer(f"Xatolik yuz berdi: {e}", reply_markup=admin_keyboard())
@@ -475,42 +460,37 @@ async def handle_channel_deletion(callback_query: CallbackQuery):
 
 
 
-
 @dp.message(
-    lambda message: isinstance(user_states.get(message.from_user.id), dict) and user_states[message.from_user.id].get(
-        'state') == 'deleting_admin'
+    lambda message: isinstance(user_states.get(message.from_user.id), dict) and user_states[message.from_user.id].get('state') == 'deleting_admin'
 )
 @dp.callback_query(lambda c: c.data.startswith("delete_admin_"))
 async def handle_delete_admin_callback(callback_query: CallbackQuery):
     user_id = callback_query.from_user.id
     admin_id = callback_query.data[len("delete_admin_"):].strip()
 
-    # Delete the admin from the database
     try:
-        cursor.execute("DELETE FROM admins WHERE telegram_id = ?", (admin_id,))
-        conn.commit()
+        async with aiosqlite.connect(DATABASE_PATH) as db:
+            async with db.cursor() as cursor:
+                await cursor.execute("DELETE FROM admins WHERE telegram_id = ?", (admin_id,))
+                await db.commit()
 
-        if cursor.rowcount > 0:
-            await callback_query.message.answer(f"Admin {admin_id} muvaffaqiyatli o'chirildi.")
-        else:
-            await callback_query.message.answer(f"{admin_id} adminlar ro'yxatida topilmadi.")
+                if cursor.rowcount > 0:
+                    await callback_query.message.answer(f"Admin {admin_id} muvaffaqiyatli o'chirildi.")
+                else:
+                    await callback_query.message.answer(f"{admin_id} adminlar ro'yxatida topilmadi.")
     except Exception as e:
         await callback_query.message.answer(f"Xatolik yuz berdi: {e}")
 
-    # Clear the state and return to the admin panel
     user_states.pop(user_id, None)
     await callback_query.message.delete()
     await admin_panel_handler(callback_query.message)
 
-
 @dp.message(
-    lambda message: isinstance(user_states.get(message.from_user.id), dict) and user_states[message.from_user.id].get(
-        'state') == 'adding_admin'
+    lambda message: isinstance(user_states.get(message.from_user.id), dict) and user_states[message.from_user.id].get('state') == 'adding_admin'
 )
 async def handle_add_admin(message: Message):
     user_id = message.from_user.id
     username = message.text.strip().lstrip('@')  # Remove '@' if provided
-
 
     # Fetch user info based on the username
     try:
@@ -522,38 +502,48 @@ async def handle_add_admin(message: Message):
 
     # Insert the new admin into the database
     try:
-        cursor.execute("INSERT INTO admins (telegram_id) VALUES (?)", (new_admin_id,))
-        conn.commit()
+        async with aiosqlite.connect(DATABASE_PATH) as db:
+            async with db.cursor() as cursor:
+                await cursor.execute("INSERT INTO admins (telegram_id) VALUES (?)", (new_admin_id,))
+                await db.commit()
         await message.answer(f"Yangi admin {username} muvaffaqiyatli qo'shildi.")
-    except sqlite3.IntegrityError:
+    except aiosqlite.IntegrityError:
         await message.answer("Bu foydalanuvchi allaqachon admin.")
     except Exception as e:
         await message.answer(f"Admin qo'shishda xatolik yuz berdi: {e}")
 
-
     # Clear the state
     user_states.pop(user_id, None)
     await admin_panel_handler(message)
-@dp.message(lambda message: isinstance(user_states.get(message.from_user.id), str) and user_states[message.from_user.id] == 'broadcast_message')
+
+
+@dp.message(lambda message: isinstance(user_states.get(message.from_user.id), str) and user_states[
+    message.from_user.id] == 'broadcast_message')
 async def broadcast_message_to_users(message: Message):
     broadcast_text = message.text
 
-    # Fetch all user IDs (You need to have a table that stores user IDs)
-    cursor.execute("SELECT telegram_id FROM users")  # Replace with your actual users table and column
-    users = cursor.fetchall()
+    try:
+        async with aiosqlite.connect(DATABASE_PATH) as db:
+            async with db.cursor() as cursor:
+                # Foydalanuvchi IDlarini olish
+                await cursor.execute(
+                    "SELECT telegram_id FROM users")  # O'zingizning foydalanuvchilar jadvalini va ustunning nomini almashtiring
+                users = await cursor.fetchall()
 
-    # Send the message to all users
-    for user in users:
-        try:
-            await bot.send_message(chat_id=user[0], text=broadcast_text)
-        except Exception as e:
-            logging.error(f"Failed to send message to user {user[0]}: {e}")
+        # Har bir foydalanuvchiga xabar yuborish
+        for user in users:
+            try:
+                await bot.send_message(chat_id=user[0], text=broadcast_text)
+            except Exception as e:
+                logging.error(f"Failed to send message to user {user[0]}: {e}")
 
-    # Confirm the message has been sent
-    await message.answer("Xabar barcha foydalanuvchilarga muvaffaqiyatli yuborildi.", reply_markup=admin_keyboard())
+        # Xabar yuborish muvaffaqiyatli yakunlandi
+        await message.answer("Xabar barcha foydalanuvchilarga muvaffaqiyatli yuborildi.", reply_markup=admin_keyboard())
+    except Exception as e:
+        await message.answer(f"Xatolik yuz berdi: {e}", reply_markup=admin_keyboard())
+
+    # Holatni tozalash
     user_states.pop(message.from_user.id, None)
-
-
 @dp.message(
     lambda message: isinstance(user_states.get(message.from_user.id), dict) and user_states[message.from_user.id].get(
         'state') == 'adding_movie')
@@ -617,25 +607,24 @@ async def handle_movie_deletion(callback_query: CallbackQuery):
     movie_code = callback_query.data[len("delete_"):].strip()
     logging.info(f"Attempting to delete movie with code: {movie_code}")
 
-
     try:
         query = "DELETE FROM movies WHERE code = ?"
-        logging.info(f"Executing query: {query} with params: ({movie_code},)")
-        cursor.execute(query, (movie_code,))
-        conn.commit()
+        async with aiosqlite.connect(DATABASE_PATH) as db:
+            async with db.cursor() as cursor:
+                logging.info(f"Executing query: {query} with params: ({movie_code},)")
+                await cursor.execute(query, (movie_code,))
+                await db.commit()
 
-        if cursor.rowcount > 0:
-            await callback_query.message.answer("Kino muvaffaqiyatli o'chirildi.", reply_markup=admin_keyboard())
-        else:
-            await callback_query.message.answer("Kino topilmadi yoki allaqachon o'chirilgan.", reply_markup=admin_keyboard())
+                if cursor.rowcount > 0:
+                    await callback_query.message.answer("Kino muvaffaqiyatli o'chirildi.", reply_markup=admin_keyboard())
+                else:
+                    await callback_query.message.answer("Kino topilmadi yoki allaqachon o'chirilgan.", reply_markup=admin_keyboard())
 
     except Exception as e:
         logging.error(f"Error deleting movie: {e}")
         await callback_query.message.answer(f"Xatolik yuz berdi: {e}", reply_markup=admin_keyboard())
 
     await callback_query.message.delete()
-
-
 
 
 # Function to save the previous state
@@ -645,55 +634,67 @@ def save_previous_state(user_id, current_state):
 
 
 async def send_channel_list(message: Message):
-    cursor.execute("SELECT channel_name, telegram_id FROM channels")
-    channels = cursor.fetchall()
+    try:
+        async with aiosqlite.connect(DATABASE_PATH) as db:
+            async with db.cursor() as cursor:
+                await cursor.execute("SELECT channel_name, channel_url FROM channels")
+                channels = await cursor.fetchall()
 
-    inline_keyboard = [
-        [InlineKeyboardButton(text=f"{channel[0]}", callback_data=f"delete_{channel[1]}")]
-        for channel in channels
-    ]
-    inline_keyboard.append([InlineKeyboardButton(text="Orqaga", callback_data="back_to_admin_panel")])
-    markup = InlineKeyboardMarkup(inline_keyboard=inline_keyboard)
+        inline_keyboard = [
+            [InlineKeyboardButton(text=f"{channel[0]}", callback_data=f"delete_{channel[1]}")]
+            for channel in channels
+        ]
+        inline_keyboard.append([InlineKeyboardButton(text="Orqaga", callback_data="back_to_admin_panel")])
+        markup = InlineKeyboardMarkup(inline_keyboard=inline_keyboard)
 
-    await message.answer("O'chirish uchun kanalni tanlang:", reply_markup=markup)
-
+        await message.answer("O'chirish uchun kanalni tanlang:", reply_markup=markup)
+    except Exception as e:
+        logging.error(f"Error sending channel list: {e}")
+        await message.answer(f"Xatolik yuz berdi: {e}")
 
 async def send_movie_list(message: Message):
-    cursor.execute("SELECT code, title FROM movies")
-    movies = cursor.fetchall()
+    try:
+        async with aiosqlite.connect(DATABASE_PATH) as db:
+            async with db.cursor() as cursor:
+                await cursor.execute("SELECT code, title FROM movies")
+                movies = await cursor.fetchall()
 
-    inline_keyboard = [
-        [InlineKeyboardButton(text=f"{movie[1]} - {movie[0]}", callback_data=f"delete_{movie[0]}")]
-        for movie in movies
-    ]
-    inline_keyboard.append([InlineKeyboardButton(text="Orqaga", callback_data="back_to_admin_panel")])
-    markup = InlineKeyboardMarkup(inline_keyboard=inline_keyboard)
+        inline_keyboard = [
+            [InlineKeyboardButton(text=f"{movie[1]} - {movie[0]}", callback_data=f"delete_{movie[0]}")]
+            for movie in movies
+        ]
+        inline_keyboard.append([InlineKeyboardButton(text="Orqaga", callback_data="back_to_admin_panel")])
+        markup = InlineKeyboardMarkup(inline_keyboard=inline_keyboard)
 
-    await message.answer("O'chirish uchun kinoni tanlang:", reply_markup=markup)
+        await message.answer("O'chirish uchun kinoni tanlang:", reply_markup=markup)
+    except Exception as e:
+        logging.error(f"Error sending movie list: {e}")
+        await message.answer(f"Xatolik yuz berdi: {e}")
 
 async def show_admin_list(message: Message):
     user_id = message.from_user.id
 
-    # Fetch all admins
-    cursor.execute("SELECT telegram_id FROM admins")
-    admins = cursor.fetchall()
+    try:
+        async with aiosqlite.connect(DATABASE_PATH) as db:
+            async with db.cursor() as cursor:
+                await cursor.execute("SELECT telegram_id FROM admins")
+                admins = await cursor.fetchall()
 
-    # Create inline keyboard with admin selection
-    inline_keyboard = [
-        [InlineKeyboardButton(text=f"Admin {admin[0]}", callback_data=f"delete_admin_{admin[0]}")]
-        for admin in admins
-    ]
-    inline_keyboard.append([InlineKeyboardButton(text="Orqaga", callback_data="back_to_admin_panel")])
-    markup = InlineKeyboardMarkup(inline_keyboard=inline_keyboard)
+        inline_keyboard = [
+            [InlineKeyboardButton(text=f"Admin {admin[0]}", callback_data=f"delete_admin_{admin[0]}")]
+            for admin in admins
+        ]
+        inline_keyboard.append([InlineKeyboardButton(text="Orqaga", callback_data="back_to_admin_panel")])
+        markup = InlineKeyboardMarkup(inline_keyboard=inline_keyboard)
 
-    await message.answer("O'chirish uchun adminni tanlang:", reply_markup=markup)
-
-
+        await message.answer("O'chirish uchun adminni tanlang:", reply_markup=markup)
+    except Exception as e:
+        logging.error(f"Error showing admin list: {e}")
+        await message.answer(f"Xatolik yuz berdi: {e}")
 @dp.callback_query(lambda c: c.data == "back_to_admin_panel")
 async def back_to_admin_panel(callback_query: CallbackQuery):
     await callback_query.message.delete()
     await admin_panel_handler(callback_query.message)
-
 @dp.message(lambda message: isinstance(user_states.get(message.from_user.id), dict) and user_states[message.from_user.id].get('state') == 'searching_movie')
 async def search_movie_by_code(message: Message):
     user_id = message.from_user.id
@@ -707,12 +708,14 @@ async def search_movie_by_code(message: Message):
         await message.answer("Sizning holatingiz topilmadi. Iltimos, qayta urinib ko'ring.")
         return
 
-
     try:
-        # Search for the movie in the database
-        logging.info(f"Querying movie with code: {movie_code}")
-        cursor.execute("SELECT title, year, genre, language, code, video FROM movies WHERE code = ?", (movie_code,))
-        movie = cursor.fetchone()
+        async with aiosqlite.connect(DATABASE_PATH) as db:
+            async with db.cursor() as cursor:
+                # Search for the movie in the database
+                logging.info(f"Querying movie with code: {movie_code}")
+                await cursor.execute("SELECT title, year, genre, language, code, video FROM movies WHERE code = ?", (movie_code,))
+                movie = await cursor.fetchone()
+
     except Exception as e:
         logging.error(f"Database error: {e}")
         await message.answer("Ma'lumotlar bazasiga ulanishda xatolik. Iltimos, keyinroq qayta urinib ko'ring.")
@@ -731,7 +734,6 @@ async def search_movie_by_code(message: Message):
             f"<b>🗂Yuklash:</b> {code}\n\n\n"
             f"<b>🤖Bot:</b> @codermoviebot"
         )
-
 
         # Check if video_file_id is not empty or None
         if video_file_id:
@@ -754,7 +756,6 @@ async def search_movie_by_code(message: Message):
         # Faqat muvaffaqiyatli bo'lsa holatni tozalaymiz
         logging.info(f"Clearing state for user: {user_id}")
         user_states.pop(user_id, None)
-
 async def main():
     await dp.start_polling(bot)
 

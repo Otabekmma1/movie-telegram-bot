@@ -1,0 +1,148 @@
+INFO:aiogram.dispatcher:Start polling
+INFO:aiogram.dispatcher:Run polling for bot @codermoviebot id=7511166749 - 'CoderMovieBot'
+INFO:aiogram.event:Update id=217886620 is handled. Duration 468 ms by bot id=7511166749
+INFO:aiogram.event:Update id=217886621 is handled. Duration 1233 ms by bot id=7511166749
+INFO:aiogram.event:Update id=217886622 is handled. Duration 139 ms by bot id=7511166749
+INFO:aiogram.event:Update id=217886623 is handled. Duration 125 ms by bot id=7511166749
+INFO:aiogram.event:Update id=217886624 is handled. Duration 217 ms by bot id=7511166749
+INFO:aiogram.event:Update id=217886625 is handled. Duration 141 ms by bot id=7511166749
+INFO:aiogram.event:Update id=217886626 is handled. Duration 375 ms by bot id=7511166749
+INFO:aiogram.event:Update id=217886627 is handled. Duration 233 ms by bot id=7511166749
+INFO:aiogram.event:Update id=217886628 is handled. Duration 187 ms by bot id=7511166749
+INFO:aiogram.event:Update id=217886629 is handled. Duration 735 ms by bot id=7511166749
+ERROR:root:Error saving movie to database: 'coroutine' object does not support the asynchronous context manager protocol
+INFO:aiogram.event:Update id=217886630 is handled. Duration 516 ms by bot id=7511166749
+ERROR:aiogram.dispatcher:Failed to fetch updates - TelegramNetworkError: HTTP Client says - Request timeout error
+WARNING:aiogram.dispatcher:Sleep for 1.000000 seconds and try again... (tryings = 0, bot id = 7511166749)
+ERROR:aiogram.dispatcher:Failed to fetch updates - TelegramNetworkError: HTTP Client says - ClientConnectorError: Cannot connect to host api.telegram.org:443 ssl:default [getaddrinfo failed]
+WARNING:aiogram.dispatcher:Sleep for 1.366398 seconds and try again... (tryings = 1, bot id = 7511166749)
+ERROR:aiogram.dispatcher:Failed to fetch updates - TelegramNetworkError: HTTP Client says - ClientConnectorError: Cannot connect to host api.telegram.org:443 ssl:default [getaddrinfo failed]
+WARNING:aiogram.dispatcher:Sleep for 1.703853 seconds and try again... (tryings = 2, bot id = 7511166749)
+ERROR:aiogram.dispatcher:Failed to fetch updates - TelegramNetworkError: HTTP Client says - ClientConnectorError: Cannot connect to host api.telegram.org:443 ssl:default [getaddrinfo failed]
+WARNING:aiogram.dispatcher:Sleep for 2.188639 seconds and try again... (tryings = 3, bot id = 7511166749)
+ERROR:aiogram.dispatcher:Failed to fetch updates - TelegramNetworkError: HTTP Client says - ClientConnectorError: Cannot connect to host api.telegram.org:443 ssl:default [getaddrinfo failed]
+WARNING:aiogram.dispatcher:Sleep for 2.765649 seconds and try again... (tryings = 4, bot id = 7511166749)
+ERROR:aiogram.dispatcher:Failed to fetch updates - TelegramNetworkError: HTTP Client says - ClientConnectorError: Cannot connect to host api.telegram.org:443 ssl:default [getaddrinfo failed]
+WARNING:aiogram.dispatcher:Sleep for 3.592416 seconds and try again... (tryings = 5, bot id = 7511166749)
+ERROR:aiogram.dispatcher:Failed to fetch updates - TelegramNetworkError: HTTP Client says - ClientConnectorError: Cannot connect to host api.telegram.org:443 ssl:default [getaddrinfo failed]
+WARNING:aiogram.dispatcher:Sleep for 4.733742 seconds and try again... (tryings = 6, bot id = 7511166749)
+INFO:aiogram.dispatcher:Connection established (tryings = 7, bot id = 7511166749)
+INFO:aiogram.dispatcher:Polling stopped
+INFO:aiogram.dispatcher:Polling stopped for bot @codermoviebot id=7511166749 - 'CoderMovieBot'
+INFO:aiogram.dispatcher:Start polling
+INFO:aiogram.dispatcher:Run polling for bot @codermoviebot id=7511166749 - 'CoderMovieBot'
+INFO:aiogram.event:Update id=217886631 is handled. Duration 485 ms by bot id=7511166749
+INFO:aiogram.event:Update id=217886632 is handled. Duration 141 ms by bot id=7511166749
+INFO:aiogram.event:Update id=217886633 is handled. Duration 141 ms by bot id=7511166749
+INFO:aiogram.event:Update id=217886634 is handled. Duration 157 ms by bot id=7511166749
+INFO:aiogram.event:Update id=217886635 is handled. Duration 266 ms by bot id=7511166749
+INFO:aiogram.event:Update id=217886636 is handled. Duration 156 ms by bot id=7511166749
+INFO:aiogram.event:Update id=217886637 is handled. Duration 156 ms by bot id=7511166749
+INFO:aiogram.event:Update id=217886638 is handled. Duration 203 ms by bot id=7511166749
+ERROR:root:Error saving movie to database: 'coroutine' object does not support the asynchronous context manager protocol
+INFO:aiogram.event:Update id=217886639 is handled. Duration 296 ms by bot id=7511166749
+INFO:aiogram.dispatcher:Polling stopped
+INFO:aiogram.dispatcher:Polling stopped for bot @codermoviebot id=7511166749 - 'CoderMovieBot'
+INFO:aiogram.dispatcher:Start polling
+INFO:aiogram.dispatcher:Run polling for bot @codermoviebot id=7511166749 - 'CoderMovieBot'
+INFO:aiogram.event:Update id=217886640 is handled. Duration 578 ms by bot id=7511166749
+INFO:aiogram.event:Update id=217886641 is handled. Duration 156 ms by bot id=7511166749
+INFO:aiogram.event:Update id=217886642 is handled. Duration 171 ms by bot id=7511166749
+INFO:aiogram.event:Update id=217886643 is handled. Duration 141 ms by bot id=7511166749
+INFO:aiogram.event:Update id=217886644 is handled. Duration 202 ms by bot id=7511166749
+INFO:aiogram.event:Update id=217886645 is handled. Duration 187 ms by bot id=7511166749
+INFO:aiogram.event:Update id=217886646 is handled. Duration 203 ms by bot id=7511166749
+INFO:aiogram.event:Update id=217886647 is handled. Duration 281 ms by bot id=7511166749
+INFO:aiogram.event:Update id=217886648 is handled. Duration 250 ms by bot id=7511166749
+INFO:aiogram.event:Update id=217886649 is handled. Duration 202 ms by bot id=7511166749
+ERROR:root:Error saving movie to database: 'coroutine' object does not support the asynchronous context manager protocol
+INFO:aiogram.event:Update id=217886650 is handled. Duration 359 ms by bot id=7511166749
+INFO:aiogram.dispatcher:Polling stopped
+INFO:aiogram.dispatcher:Polling stopped for bot @codermoviebot id=7511166749 - 'CoderMovieBot'
+INFO:aiogram.dispatcher:Start polling
+INFO:aiogram.dispatcher:Run polling for bot @codermoviebot id=7511166749 - 'CoderMovieBot'
+INFO:aiogram.event:Update id=217886651 is handled. Duration 406 ms by bot id=7511166749
+INFO:aiogram.event:Update id=217886652 is handled. Duration 218 ms by bot id=7511166749
+INFO:aiogram.event:Update id=217886653 is handled. Duration 156 ms by bot id=7511166749
+INFO:aiogram.event:Update id=217886654 is handled. Duration 141 ms by bot id=7511166749
+INFO:aiogram.event:Update id=217886655 is handled. Duration 156 ms by bot id=7511166749
+INFO:aiogram.event:Update id=217886656 is handled. Duration 313 ms by bot id=7511166749
+INFO:aiogram.event:Update id=217886657 is handled. Duration 139 ms by bot id=7511166749
+INFO:aiogram.event:Update id=217886658 is handled. Duration 140 ms by bot id=7511166749
+ERROR:root:Error saving movie to database: 'coroutine' object does not support the context manager protocol
+INFO:aiogram.event:Update id=217886659 is not handled. Duration 16 ms by bot id=7511166749
+ERROR:aiogram.event:Cause exception while process update id=217886659 by bot id=7511166749
+TypeError: object bool can't be used in 'await' expression
+Traceback (most recent call last):
+  File "C:\Users\user\Desktop\moivebot\.venv\Lib\site-packages\aiogram\dispatcher\dispatcher.py", line 309, in _process_update
+    response = await self.feed_update(bot, update, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Desktop\moivebot\.venv\Lib\site-packages\aiogram\dispatcher\dispatcher.py", line 158, in feed_update
+    response = await self.update.wrap_outer_middleware(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Desktop\moivebot\.venv\Lib\site-packages\aiogram\dispatcher\middlewares\error.py", line 25, in __call__
+    return await handler(event, data)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Desktop\moivebot\.venv\Lib\site-packages\aiogram\dispatcher\middlewares\user_context.py", line 56, in __call__
+    return await handler(event, data)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Desktop\moivebot\.venv\Lib\site-packages\aiogram\fsm\middleware.py", line 42, in __call__
+    return await handler(event, data)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Desktop\moivebot\.venv\Lib\site-packages\aiogram\dispatcher\event\telegram.py", line 121, in trigger
+    return await wrapped_inner(event, kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Desktop\moivebot\.venv\Lib\site-packages\aiogram\dispatcher\event\handler.py", line 43, in call
+    return await wrapped()
+           ^^^^^^^^^^^^^^^
+  File "C:\Users\user\Desktop\moivebot\.venv\Lib\site-packages\aiogram\dispatcher\dispatcher.py", line 276, in _listen_update
+    return await self.propagate_event(update_type=update_type, event=event, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Desktop\moivebot\.venv\Lib\site-packages\aiogram\dispatcher\router.py", line 142, in propagate_event
+    return await observer.wrap_outer_middleware(_wrapped, event=event, data=kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Desktop\moivebot\.venv\Lib\site-packages\aiogram\dispatcher\router.py", line 137, in _wrapped
+    return await self._propagate_event(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Desktop\moivebot\.venv\Lib\site-packages\aiogram\dispatcher\router.py", line 162, in _propagate_event
+    response = await observer.trigger(event, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Desktop\moivebot\.venv\Lib\site-packages\aiogram\dispatcher\event\telegram.py", line 121, in trigger
+    return await wrapped_inner(event, kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Desktop\moivebot\.venv\Lib\site-packages\aiogram\dispatcher\event\handler.py", line 43, in call
+    return await wrapped()
+           ^^^^^^^^^^^^^^^
+  File "C:\Users\user\Desktop\moivebot\bot.py", line 599, in add_movie
+    if await save_movie_to_db(user_id):
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: object bool can't be used in 'await' expression
+INFO:aiogram.dispatcher:Polling stopped
+INFO:aiogram.dispatcher:Polling stopped for bot @codermoviebot id=7511166749 - 'CoderMovieBot'
+INFO:aiogram.dispatcher:Start polling
+INFO:aiogram.dispatcher:Run polling for bot @codermoviebot id=7511166749 - 'CoderMovieBot'
+INFO:aiogram.event:Update id=217886660 is handled. Duration 406 ms by bot id=7511166749
+INFO:aiogram.event:Update id=217886661 is handled. Duration 218 ms by bot id=7511166749
+INFO:aiogram.event:Update id=217886662 is handled. Duration 296 ms by bot id=7511166749
+INFO:aiogram.event:Update id=217886663 is handled. Duration 155 ms by bot id=7511166749
+INFO:aiogram.event:Update id=217886664 is handled. Duration 156 ms by bot id=7511166749
+INFO:aiogram.event:Update id=217886665 is handled. Duration 139 ms by bot id=7511166749
+INFO:aiogram.event:Update id=217886666 is handled. Duration 187 ms by bot id=7511166749
+INFO:aiogram.event:Update id=217886667 is handled. Duration 406 ms by bot id=7511166749
+ERROR:root:Error saving movie to database: 'coroutine' object does not support the asynchronous context manager protocol
+INFO:aiogram.event:Update id=217886668 is handled. Duration 406 ms by bot id=7511166749
+INFO:aiogram.dispatcher:Polling stopped
+INFO:aiogram.dispatcher:Polling stopped for bot @codermoviebot id=7511166749 - 'CoderMovieBot'
+INFO:aiogram.dispatcher:Start polling
+INFO:aiogram.dispatcher:Run polling for bot @codermoviebot id=7511166749 - 'CoderMovieBot'
+INFO:aiogram.event:Update id=217886669 is handled. Duration 389 ms by bot id=7511166749
+INFO:aiogram.event:Update id=217886670 is handled. Duration 141 ms by bot id=7511166749
+INFO:aiogram.event:Update id=217886671 is handled. Duration 266 ms by bot id=7511166749
+INFO:aiogram.event:Update id=217886672 is handled. Duration 156 ms by bot id=7511166749
+INFO:aiogram.event:Update id=217886673 is handled. Duration 297 ms by bot id=7511166749
+INFO:aiogram.event:Update id=217886674 is handled. Duration 156 ms by bot id=7511166749
+INFO:aiogram.event:Update id=217886675 is handled. Duration 188 ms by bot id=7511166749
+INFO:aiogram.event:Update id=217886676 is handled. Duration 125 ms by bot id=7511166749
+INFO:aiogram.event:Update id=217886677 is handled. Duration 421 ms by bot id=7511166749
+INFO:aiogram.dispatcher:Polling stopped
+INFO:aiogram.dispatcher:Polling stopped for bot @codermoviebot id=7511166749 - 'CoderMovieBot'
